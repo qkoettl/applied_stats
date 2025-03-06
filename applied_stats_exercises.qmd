@@ -4,6 +4,8 @@ format: html
 editor: visual
 ---
 
+The `echo: false` option disables the printing of code (only output is displayed).
+
 ## Overview over used software
 
 ```{r}
@@ -19,17 +21,80 @@ lapply(pkgs, require, character.only = TRUE)
 #install.packages(pkgs) # Uncomment this line to install any missing packages
 ```
 
-# Exercise 7
+# Exercise 6
 
 ```{r}
-1 + 1
+blood_data <- read.table("transfusion.data", sep = ",", header = TRUE)
 ```
 
 You can add options to executable code like this
 
 ```{r}
-#| echo: false
-2 * 2
+colnames(blood_data) <- c("recency", "frequency", "amount", "time", "donation")
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+## a
+
+GLM model for frequency
+
+```{r}
+glm_frequency <- glm(donation ~ frequency, data = blood_data, family = binomial)
+summary(glm_frequency)
+
+```
+
+GLM model with amount
+
+```{r}
+glm_amount <- glm(donation ~ amount, data = blood_data, family = binomial)
+summary(glm_amount)
+```
+
+Model comparison
+
+```{r}
+# Compare AIC of the models
+AIC(glm_amount, glm_frequency)
+
+# Likelihood ratio test
+anova(glm_amount, glm_frequency, test = "Chisq")
+
+```
+
+Plot
+
+```{r}
+# Scatter plot of frequency vs amount
+ggplot(blood_data, aes(x = frequency, y = amount)) +
+  geom_point(color = "blue", alpha = 0.5) +   # Points with transparency for better visualization
+  labs(x = "Frequency (Total Donations)", y = "Amount (Total Blood Donated in c.c.)", 
+       title = "Scatter Plot of Frequency vs Amount") +
+  theme_minimal()
+
+
+```
+
+## b
+
+```{r}
+# Fit GLM with different link functions
+glm_logit <- glm(donation ~ recency, data = blood_data, 
+                 family = lo(link = "logit"))
+glm_probit <- glm(donation ~ recency, data = blood_data, 
+                  family = binomial(link = "probit"))
+glm_cloglog <- glm(donation ~ recency, data = blood_data, 
+                   family = binomial(link = "cloglog"))
+
+# Display summaries of each model
+summary(glm_logit)
+summary(glm_probit)
+summary(glm_cloglog)
+summary(glm_identity)
+
+```
+
+```{r}
+# Compare AIC of all models
+AIC(glm_logit, glm_probit, glm_cloglog, glm_identity)
+
+```
